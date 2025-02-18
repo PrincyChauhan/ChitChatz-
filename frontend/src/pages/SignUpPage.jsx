@@ -1,5 +1,4 @@
 import { useState, useContext } from "react";
-import axios from "axios";
 import {
   Eye,
   EyeOff,
@@ -9,66 +8,44 @@ import {
   MessageSquare,
   User,
 } from "lucide-react";
-import { Link } from "react-router-dom";
-import { AuthProvider } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 
 const SignUpPage = () => {
-  const { signup } = useContext(AuthProvider);
+  const { signup } = useContext(AuthContext);
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     password: "",
-    // confirmPassword: "",
   });
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const [isSigningUp, setIsSigningUp] = useState(false); // Added state for signing up
+  const [isSigningUp, setIsSigningUp] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSigningUp(true);
+    setError("");
 
-    // if (formData.password !== formData.confirmPassword) {
-    //   setError("Passwords do not match.");
-    //   return;
-    // }
-
-    setIsSigningUp(true); // Set the state to true before making the API call
-
-    try {
-      // Make a POST request to sign up (replace the URL with your actual endpoint)
-      const response = await axios.post(
-        "http://localhost:3000/api/auth/signup",
-        formData
-      );
-      setSuccessMessage(
-        "Account created successfully! Redirecting to login..."
-      );
-      setTimeout(() => {
-        navigate("/login"); // Redirect after 2 seconds
-      }, 2000);
-      console.log(response, "--------------------");
-    } catch (err) {
-      setError("Signup failed: " + err.message); // Display any errors
-    } finally {
-      setIsSigningUp(false); // Set the state back to false after the request
+    const response = await signup(formData);
+    if (!response.success) {
+      setError(response.error);
+      setIsSigningUp(false);
+      return;
     }
+    setSuccessMessage("Account created successfully! Redirecting to login...");
+    setTimeout(() => navigate("/login"), 2000);
   };
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
-      {/* left side */}
       <div className="flex flex-col justify-center items-center p-6 sm:p-12">
         <div className="w-full max-w-md space-y-8">
-          {/* LOGO */}
           <div className="text-center mb-8">
             <div className="flex flex-col items-center gap-2 group">
-              <div
-                className="size-12 rounded-xl bg-primary/10 flex items-center justify-center 
-              group-hover:bg-primary/20 transition-colors"
-              >
+              <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                 <MessageSquare className="size-6 text-primary" />
               </div>
               <h1 className="text-2xl font-bold mt-2">Create Account</h1>
@@ -77,16 +54,13 @@ const SignUpPage = () => {
               </p>
             </div>
           </div>
-
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="form-control">
               <label className="label">
                 <span className="label-text font-medium">Full Name</span>
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="size-5 text-base-content/40" />
-                </div>
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 size-5 text-base-content/40" />
                 <input
                   type="text"
                   className="input input-bordered w-full pl-10"
@@ -98,15 +72,12 @@ const SignUpPage = () => {
                 />
               </div>
             </div>
-
             <div className="form-control">
               <label className="label">
                 <span className="label-text font-medium">Email</span>
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="size-5 text-base-content/40" />
-                </div>
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 size-5 text-base-content/40" />
                 <input
                   type="email"
                   className="input input-bordered w-full pl-10"
@@ -118,15 +89,12 @@ const SignUpPage = () => {
                 />
               </div>
             </div>
-
             <div className="form-control">
               <label className="label">
                 <span className="label-text font-medium">Password</span>
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="size-5 text-base-content/40" />
-                </div>
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 size-5 text-base-content/40" />
                 <input
                   type={showPassword ? "text" : "password"}
                   className="input input-bordered w-full pl-10"
@@ -138,7 +106,7 @@ const SignUpPage = () => {
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
@@ -149,35 +117,10 @@ const SignUpPage = () => {
                 </button>
               </div>
             </div>
-
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-medium">Confirm Password</span>
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="size-5 text-base-content/40" />
-                </div>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  className="input input-bordered w-full pl-10"
-                  placeholder="••••••••"
-                  // value={formData.confirmPassword}
-                  // onChange={(e) =>
-                  //   setFormData({
-                  //     ...formData,
-                  //     confirmPassword: e.target.value,
-                  //   })
-                  // }
-                />
-              </div>
-            </div>
-
             {error && <p className="text-red-500">{error}</p>}
             {successMessage && (
               <p className="text-green-500">{successMessage}</p>
             )}
-
             <button
               type="submit"
               className="btn btn-primary w-full"
@@ -185,15 +128,13 @@ const SignUpPage = () => {
             >
               {isSigningUp ? (
                 <>
-                  <Loader2 className="size-5 animate-spin" />
-                  Loading...
+                  <Loader2 className="size-5 animate-spin" /> Loading...
                 </>
               ) : (
                 "Create Account"
               )}
             </button>
           </form>
-
           <div className="text-center">
             <p className="text-base-content/60">
               Already have an account?{" "}
@@ -202,17 +143,6 @@ const SignUpPage = () => {
               </Link>
             </p>
           </div>
-        </div>
-      </div>
-
-      {/* right side */}
-      <div className="hidden lg:block">
-        <div className="flex flex-col justify-center items-center p-12">
-          <h2 className="text-xl font-bold">Join our community</h2>
-          <p className="mt-4 text-base-content/60">
-            Connect with friends, share moments, and stay in touch with your
-            loved ones.
-          </p>
         </div>
       </div>
     </div>

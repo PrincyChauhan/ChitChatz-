@@ -1,59 +1,99 @@
-import { createContext, useState } from "react";
+import { createContext, useState, useEffect } from "react";
 import axios from "axios";
 
-export const AuthProvider = createContext();
+export const AuthContext = createContext();
 
-const AuthContext = ({ children }) => {
-  // Use destructuring here
+const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [isSigningUp, setIsSigningUp] = useState(false);
 
-  const signup = async () => {
+  // Check if the user is already logged in
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    console.log(storedUser, "--------storeduser--------");
+    if (storedUser) {
+      // setUser(JSON.parse(storedUser));
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  // Signup function
+  const signup = async (userData) => {
+    setLoading(true);
+    setIsSigningUp(true);
+    setError("");
+
     try {
-      setLoading(true);
       const response = await axios.post(
-        "http://localhost:3000/api/auth/signup"
+        "http://localhost:3000/api/auth/signup",
+        userData
+      );
+
+      setUser(response.data.user);
+      setIsAuthenticated(true);
+      localStorage.setItem("user", JSON.stringify(response.data.user));
+
+      return { success: true };
+    } catch (err) {
+      const errorMsg =
+        err.response?.data?.error || "An unexpected error occurred.";
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
+    } finally {
+      setLoading(false);
+      setIsSigningUp(false);
+    }
+  };
+
+  // Login function
+  const login = async (userData) => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/api/auth/login",
+        userData
       );
       setUser(response.data.user);
       setIsAuthenticated(true);
-    } catch (error) {
-      console.error(
-        "signup failed:",
-        error.response?.data?.message || error.message
-      );
+      localStorage.setItem("user", JSON.stringify(response.data.user));
+      return { success: true };
+    } catch (err) {
+      const errorMsg = err.response?.data?.error || "Login failed.";
+      setError(errorMsg);
+      throw new Error(errorMsg); // Ensure error is thrown
     } finally {
       setLoading(false);
     }
   };
 
-  const login = async (email, password) => {
-    try {
-      setLoading(true);
-      const response = await axios.post(
-        "http://localhost:3000/api/auth/login",
-        {
-          email,
-          password,
-        }
-      );
-      setUser(response.data.user);
-      setIsAuthenticated(true);
-    } catch (error) {
-      console.error(
-        "login failed:",
-        error.response?.data?.message || error.message
-      );
-    }
+  // Logout function
+  const logout = () => {
+    setUser(null);
+    setIsAuthenticated(false);
+    localStorage.removeItem("user");
   };
 
   return (
-    <AuthProvider.Provider
-      value={{ user, isAuthenticated, loading, signup, login }}
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated,
+        loading,
+        signup,
+        login,
+        logout,
+        error,
+        isSigningUp,
+      }}
     >
       {children}
-    </AuthProvider.Provider>
+    </AuthContext.Provider>
   );
 };
 
-export default AuthContext;
+export default AuthProvider;

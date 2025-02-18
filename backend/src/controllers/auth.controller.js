@@ -40,7 +40,7 @@ export const signup = async (req, res) => {
       res.status(400).json({ error: "User not created" });
     }
   } catch (error) {
-    console.log(error);
+    console.log("Error during signup:", error); // Log the error to check details
     res.status(500).json({
       error: "Server error",
     });
@@ -52,28 +52,31 @@ export const login = async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (!user) {
-      res.status(400).json({
-        message: "User Credentials not found",
+      return res.status(400).json({
+        error: "User not found. Please check your email.",
       });
     }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      res.status(400).json({
-        message: "Invalid Credentials",
+      return res.status(400).json({
+        error: "Incorrect password. Please try again.",
       });
     }
+
     generateToken(user._id, res);
-    res.status(200).json({
+
+    return res.status(200).json({
       _id: user._id,
       fullName: user.fullName,
       email: user.email,
       profilePic: user.profilePic,
-      message: "Login Successful",
+      message: "Login Successfull",
     });
   } catch (error) {
     console.log(error);
-    res.status(500).json({
-      message: error.message,
+    return res.status(500).json({
+      message: "Internal server error. Please try again later.",
     });
   }
 };

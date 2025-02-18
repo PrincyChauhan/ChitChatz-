@@ -1,32 +1,31 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useContext } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Loader2, Lock, Mail, MessageSquare } from "lucide-react";
+import { AuthContext } from "../context/AuthContext";
 
 const LoginPage = () => {
+  const { login, loading } = useContext(AuthContext);
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+  const [error, setError] = useState("");
+  const [formData, setFormData] = useState({ email: "", password: "" });
+
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoggingIn(true);
-    console.log("Logging in...");
+    setError("");
 
-    // Simulating a login request (replace with actual API call)
-    setTimeout(() => {
-      setIsLoggingIn(false);
-    }, 2000);
+    try {
+      const res = await login(formData);
+      if (res.success) navigate("/");
+    } catch (error) {
+      setError(error.message);
+    }
   };
-
   return (
     <div className="h-screen grid lg:grid-cols-2">
-      {/* Left Side - Form */}
       <div className="flex flex-col justify-center items-center p-6 sm:p-12">
         <div className="w-full max-w-md space-y-8">
-          {/* Logo */}
           <div className="text-center mb-8">
             <div className="flex flex-col items-center gap-2 group">
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
@@ -37,7 +36,6 @@ const LoginPage = () => {
             </div>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="form-control">
               <label className="label">
@@ -90,12 +88,14 @@ const LoginPage = () => {
               </div>
             </div>
 
+            {error && <p className="text-red-500">{error}</p>}
+
             <button
               type="submit"
               className="btn btn-primary w-full"
-              disabled={isLoggingIn}
+              disabled={loading}
             >
-              {isLoggingIn ? (
+              {loading ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin" />
                   Loading...
